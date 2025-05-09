@@ -31,78 +31,73 @@ To implement a Support Vector Machine (SVM) model to classify food items and opt
 
 ## Program:
 ```
-/*
-Program to implement SVM for food classification for diabetic patients.
+"""
+Program to implement Logistic Regression for classifying food choices based on nutritional information.
 Developed by: DHARUNYADEVI S
-RegisterNumber: 212223220018
+Register Number: 212223220018 
+"""
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report, confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.svm import SVC
-from sklearn.metrics import classification_report, accuracy_score
-from sklearn.preprocessing import StandardScaler
+import tkinter as tk
+from tkinter.filedialog import askopenfilename
 
-# Load your dataset
-data = pd.read_csv(r'C:\Users\admin\Downloads\food_items_binary (1).csv')  # Replace with your dataset file
+# Select CSV file using file dialog
+tk.Tk().withdraw()  # Hide the root window
+file_path = askopenfilename(title="Select food_items.csv file", filetypes=[("CSV Files", "*.csv")])
+data = pd.read_csv(file_path)
 
-# Separate features and target
-X = data.drop(columns=['class'])  # Replace 'class' with your target column name
-y = data['class']
+# Print column names
+print("Column Names in the Dataset:")
+print(data.columns)
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Separate features (X) and target (y)
+X = data.drop(columns=['class'])  # Nutritional information as features
+y = data['class']  # Target: class labels
 
-# Standardize the features
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Standardize the features for better performance
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Define the SVM model
-svm = SVC()
+# Train the Logistic Regression model with increased max_iter
+model = LogisticRegression(random_state=42, max_iter=1000)
+model.fit(X_train_scaled, y_train)
 
-# Define the hyperparameter grid
-param_grid = {
-    'C': [0.1, 1, 10],
-    'kernel': ['linear', 'rbf', 'poly'],
-    'gamma': ['scale', 'auto']
-}
+# Predict the classifications on the test data
+y_pred = model.predict(X_test_scaled)
 
-# Perform Grid Search with Cross Validation
-grid_search = GridSearchCV(svm, param_grid, cv=5, scoring='accuracy', n_jobs=-1, return_train_score=True)
-grid_search.fit(X_train_scaled, y_train)
+# Evaluate the model for multiclass classification
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='macro')
+recall = recall_score(y_test, y_pred, average='macro')
+evaluation_report = classification_report(y_test, y_pred)
 
-# Extract the results into a DataFrame
-results = pd.DataFrame(grid_search.cv_results_)
+# Compute confusion matrix
+cm = confusion_matrix(y_test, y_pred)
 
-# Pivot the results for a heatmap
-heatmap_data = results.pivot_table(index='param_kernel', columns='param_C', values='mean_test_score')
+# Print results
+print(f"\nAccuracy: {accuracy:.2f}")
+print(f"Precision (macro): {precision:.2f}")
+print(f"Recall (macro): {recall:.2f}")
+print("\nClassification Report:\n", evaluation_report)
 
-# Plot the heatmap
-plt.figure(figsize=(10, 6))
-sns.heatmap(heatmap_data, annot=True, cmap='viridis', fmt=".3f")
-plt.title('Hyperparameter Tuning: Mean Test Accuracy')
-plt.xlabel('C')
-plt.ylabel('Kernel')
+# Plot the confusion matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
 plt.show()
 
-# Evaluate the best model
-best_params = grid_search.best_params_
-best_model = grid_search.best_estimator_
-
-# Make predictions
-y_pred = best_model.predict(X_test_scaled)
-
-# Evaluate the model
-accuracy = accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Display results
-print("Best Parameters:", best_params)
-print("Test Accuracy:", accuracy)
-print("Classification Report:\n", report)
-*/
 ```
 
 ## Output:
